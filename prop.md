@@ -6,35 +6,35 @@
 
 ### **1. Latar Belakang**
 
-Transformasi digital pada sektor perbankan memberikan manfaat efisiensi dan customer experience, namun di sisi lain meningkatkan risiko keamanan siber dan fraud digital yang semakin canggih. Fraudster kini banyak mengeksploitasi perilaku abnormal user maupun device, sulit dideteksi jika hanya mengandalkan rule statis (device ID, threshold transaksi, dsb).
-Tantangan lain: regulasi privasi dan policy OS modern membatasi tracking berbasis hardware identifier, sehingga fraudster bisa menghilangkan histori risiko hanya dengan reinstall aplikasi.
+Transformasi digital di sektor perbankan memangkas proses layanan, namun juga meningkatkan risiko keamanan siber dan fraud digital. Fraudster kini cenderung mengeksploitasi perilaku abnormal user/device, yang sulit dideteksi dengan rule statis seperti device ID atau threshold transaksi.
+Selain itu, regulasi privasi dan policy OS modern membatasi tracking berbasis hardware identifier, sehingga fraudster bisa menghapus histori risiko hanya dengan reinstall aplikasi.
 
 ---
 
 ### **2. Tujuan Proposal**
 
-* **Memperkuat deteksi fraud berbasis perilaku (behavioral analytics).**
-* **Mengimplementasikan risk scoring adaptif** untuk user dan perangkat.
-* **Mendukung compliance audit** melalui audit trail perilaku dan risk score.
-* **Mendorong enforcement otomatis berbasis risiko,** tidak sekadar rule statis.
+* **Meningkatkan deteksi fraud berbasis perilaku (behavioral analytics)**
+* **Menerapkan risk scoring adaptif** untuk user dan perangkat
+* **Memastikan audit trail perilaku dan risk score** demi compliance dan investigasi
+* **Mengotomatisasi enforcement berbasis risiko** (misal: blokir, MFA, limitasi fitur) secara real-time
 
 ---
 
 ### **3. Konsep & Definisi UEBA**
 
-**UEBA (User and Entity Behavior Analytics)** adalah pendekatan keamanan siber yang menganalisis aktivitas user dan device/entity untuk mendeteksi anomali, potensi fraud, dan advanced threat secara dinamis. UEBA bekerja dengan baseline perilaku normal dan mendeteksi deviasi (outlier) yang signifikan.
+**UEBA (User and Entity Behavior Analytics)** adalah sistem yang menganalisis aktivitas dan pola perilaku user serta device/entity untuk mendeteksi anomali dan potensi fraud secara dinamis, dengan cara membandingkan terhadap baseline perilaku normal serta mengidentifikasi deviasi signifikan.
 
 ---
 
 ### **4. Ruang Lingkup**
 
-* **Sumber Data:** Event log aplikasi mobile, backend API, transaction log, device fingerprint *tanpa hardware ID sensitif*.
-* **Behavior Yang Dianalisis:**
+* **Sumber Data:** Event log aplikasi mobile, backend API, transaction log, device fingerprint (tanpa hardware ID sensitif)
+* **Behavior yang Dianalisis:**
 
   * Frekuensi reaktivasi akun (install–uninstall)
-  * Pergantian device/fingerprint baru
+  * Pergantian device/fingerprint
   * Percobaan login gagal
-  * Device sharing (satu device digunakan banyak akun)
+  * Device sharing (multi user per device)
   * Lokasi/IP anomali
   * Pola transaksi abnormal
 * **Target Entity:** User ID, Account Number, Device Fingerprint
@@ -43,36 +43,11 @@ Tantangan lain: regulasi privasi dan policy OS modern membatasi tracking berbasi
 
 ### **5. Arsitektur & Metode UEBA**
 
-#### **5.1 Event Ingestion**
-
-* Semua aktivitas user dan device dicatat ke event store/log aggregator (database atau message queue).
-
-#### **5.2 Baseline Modeling**
-
-* Baseline perilaku normal dihitung dari data historis, misal rata-rata reaktivasi, device baru, dsb.
-
-#### **5.3 Risk Scoring Engine**
-
-* Setiap event yang deviasi dari baseline mendapat risk score sesuai rule.
-* Total risk score user/device menentukan status: normal, warning, high risk.
-
-#### **5.4 Automation & Enforcement**
-
-* Enforcement otomatis (MFA, monitoring, blokir, manual review) jika risk score melewati threshold.
-
-#### **5.5 Monitoring & Audit Trail**
-
-* Semua event dan enforcement tercatat untuk kebutuhan compliance dan investigasi.
-
----
-
-### **6. Skema Arsitektur Integrasi**
-
-#### **Flowchart Detail UEBA–SIEM–Core Banking**
+#### **Event Flow dan Risk Scoring UEBA**
 
 ```mermaid
 flowchart TD
-    A1[User Action on Mobile App] --> A2[App Generate Security Event]
+    A1[User on Mobile App] --> A2[App Generate Event]
     A2 --> B1[API Gateway / Backend]
     B1 --> B2[Event Logging / Queue]
     B2 --> C1[UEBA Risk Scoring Engine]
@@ -86,15 +61,16 @@ flowchart TD
     E1 --> G1[Compliance/Audit Team]
     F1 --> H1[Core Banking System]
     F2 --> H1
-
 ```
 
-**Penjelasan:**
-Event security dikirim ke backend dan event store, dikonsumsi oleh SIEM dan UEBA. SIEM menjalankan detection rule konvensional, sementara UEBA melakukan risk scoring berbasis perilaku. Enforcement otomatis dan manual dicatat untuk kebutuhan compliance.
+**Penjelasan Singkat:**
+Semua event perilaku user dikirim ke backend dan event store, lalu dianalisis UEBA untuk risk scoring.
+Jika risk score tinggi, enforcement (blokir/MFA/monitoring) langsung dijalankan secara otomatis ke core banking.
+Seluruh aktivitas dan enforcement dicatat dalam audit trail untuk compliance/regulator.
 
 ---
 
-### **7. Formulasi Risk Scoring**
+### **6. Formulasi Risk Scoring**
 
 | Event                      | Rule/Threshold           | Risk Score |
 | -------------------------- | ------------------------ | ---------- |
@@ -105,13 +81,13 @@ Event security dikirim ke backend dan event store, dikonsumsi oleh SIEM dan UEBA
 | Akses dari IP/negara baru  | per event                | +20        |
 | Transaksi outlier          | deviasi dari pola normal | +50        |
 
-* <30: Normal
-* 30–60: Warning (MFA/Limitasi)
-* > 60: High Risk (blokir/review manual)
+* **< 30:** Normal
+* **30–60:** Warning (MFA/Limitasi)
+* **> 60:** High Risk (blokir/review manual)
 
 ---
 
-### **8. Pipeline Risk Scoring: Simulasi & Output**
+### **7. Pipeline Risk Scoring: Simulasi & Output**
 
 #### **Contoh Data Event Log & Kode**
 
@@ -119,6 +95,7 @@ Event security dikirim ke backend dan event store, dikonsumsi oleh SIEM dan UEBA
 from datetime import datetime, timedelta
 
 event_log = [
+    # Simulasi event userA - perilaku cukup aktif, tapi tidak melewati threshold warning
     ('userA', 'dev1', 'reactivation', datetime.now() - timedelta(days=2)),
     ('userA', 'dev1', 'reactivation', datetime.now() - timedelta(days=1)),
     ('userA', 'dev2', 'new_device',   datetime.now() - timedelta(days=5)),
@@ -130,7 +107,7 @@ event_log = [
     ('userA', 'dev4', 'failed_login', datetime.now() - timedelta(hours=1)),
     ('userA', 'dev4', 'failed_login', datetime.now() - timedelta(hours=1)),
     ('userA', 'dev4', 'failed_login', datetime.now() - timedelta(hours=1)),
-    # Normal user
+    # userB - normal activity
     ('userB', 'dev5', 'reactivation', datetime.now() - timedelta(days=10)),
     ('userB', 'dev5', 'new_device',   datetime.now() - timedelta(days=10)),
     ('userB', 'dev5', 'failed_login', datetime.now() - timedelta(days=1)),
@@ -181,7 +158,7 @@ for user in user_ids:
         print("  Status: Normal\n")
 ```
 
-#### **Output Simulasi:**
+#### **Output Simulasi (Update):**
 
 ```
 User: userA
@@ -199,26 +176,31 @@ User: userB
   Status: Normal
 ```
 
----
+**Penjelasan Hasil Simulasi:**
 
-### **9. Benefit & Keunggulan**
-
-* Deteksi fraud lebih adaptif, scalable, dan real-time
-* Mengurangi false positive/negative
-* Audit trail lengkap untuk regulator/compliance
-* Bisa diintegrasikan ke SIEM, fraud analytics, dan core banking system
+* **userA** cukup aktif (beberapa reaktivasi, device baru, 6 kali gagal login), namun risk score hanya 10 (warning/monitor).
+* **userB** pola normal, tidak perlu tindakan khusus.
 
 ---
 
-### **10. Tantangan & Mitigasi**
+### **8. Benefit & Keunggulan**
 
-* Integrasi data lintas sistem (app, backend, SIEM)
-* Fine-tuning threshold & rule
-* Harus comply ke regulasi privasi/data protection
+* **Deteksi fraud lebih proaktif, adaptif, dan real-time**
+* **Mengurangi false positive/negative** secara signifikan
+* **Audit trail lengkap** untuk kebutuhan compliance & investigasi
+* **Dapat diintegrasikan langsung ke core banking, fraud analytics, dan sistem keamanan existing**
 
 ---
 
-### **11. Referensi Eksternal**
+### **9. Tantangan & Mitigasi**
+
+* **Integrasi data lintas sistem** (app, backend, fraud ops)
+* **Tuning threshold & rule** agar sesuai konteks bisnis
+* **Harus comply** ke regulasi privasi/data protection
+
+---
+
+### **10. Referensi Eksternal**
 
 * **Gartner UEBA Market Guide**
 * **NIST SP 800-53 Rev.5**
@@ -227,15 +209,14 @@ User: userB
 
 ---
 
-### **12. Penutup**
+### **11. Penutup**
 
-Dengan mengadopsi arsitektur ini dan mengacu pada best practice global, bank dapat melakukan deteksi fraud dan perilaku anomali secara lebih presisi, real-time, dan adaptif—serta memenuhi tuntutan compliance di era digital banking.
-**Simulasi pipeline** membuktikan pendekatan UEBA dapat diimplementasikan efisien, scalable, dan memberi dampak signifikan pada keamanan layanan perbankan digital.
+Penerapan UEBA pada digital banking memungkinkan deteksi fraud dan perilaku anomali secara presisi, real-time, dan adaptif—serta memenuhi tuntutan compliance. Simulasi pipeline membuktikan pendekatan UEBA dapat diimplementasikan secara efisien dan scalable, memberi dampak signifikan pada keamanan perbankan digital.
 
 ---
 
 **Lampiran:**
 
-* Flowchart integrasi
+* Flowchart integrasi (UEBA pipeline)
 * Kode pipeline simulasi
 * Tabel risk scoring dan rule

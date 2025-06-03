@@ -83,10 +83,10 @@ flowchart TD
     D3 --> F[Audit Trail & Reporting]
     C2 --> E1[Behavior Analysis & Risk Score Aggregation]
     E1 --> E2{Risk Score Threshold?}
-    E2 --Low Risk--> F
-    E2 --Warning--> G1[Enforcement: MFA/Monitoring]
+    E2 -- Low Risk --> F
+    E2 -- Warning --> G1[Enforcement: MFA/Monitoring]
     G1 --> F
-    E2 --High Risk--> G2[Enforcement: Block/Review]
+    E2 -- High Risk --> G2[Enforcement: Block/Review]
     G2 --> F
     G2 -.-> B1
     G1 -.-> B1

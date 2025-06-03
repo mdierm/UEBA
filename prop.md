@@ -94,7 +94,6 @@ flowchart TD
     G1 --> H
     G2 --> H
     F --> I[Compliance / Audit Team]
-
 ```
 
 **Penjelasan:**

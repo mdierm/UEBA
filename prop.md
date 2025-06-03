@@ -77,14 +77,10 @@ flowchart TD
     B1 --> B2[Event Logging (Event Store / Message Queue)]
     B2 --> C1[SIEM/Fraud Analytics Platform]
     B2 --> C2[UEBA Risk Scoring Engine]
-
-    %% SIEM Path
     C1 --> D1[Correlation Rule Detection]
     D1 --> D2[Incident Response Team]
     D2 --> D3[Manual or Automated Enforcement]
     D3 --> F[Audit Trail & Reporting]
-
-    %% UEBA Path
     C2 --> E1[Behavior Analysis & Risk Score Aggregation]
     E1 --> E2{Risk Score Threshold?}
     E2 --Low Risk--> F
@@ -92,22 +88,12 @@ flowchart TD
     G1 --> F
     E2 --High Risk--> G2[Enforcement: Block/Review]
     G2 --> F
-
-    %% Feedback Loop
     G2 -.-> B1
     G1 -.-> B1
-
-    %% Core Banking
     B1 --> H[Core Banking System]
     G1 --> H
     G2 --> H
-
-    %% Audit
     F --> I[Compliance / Audit Team]
-
-    style H fill:#e2eaff,stroke:#222,stroke-width:1px
-    style C2 fill:#d3f8e2,stroke:#222,stroke-width:1px
-    style C1 fill:#ffe2e2,stroke:#222,stroke-width:1px
 
 ```
 
